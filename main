@@ -1,0 +1,52 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+)
+
+type User struct {
+	ID      string `json:"id"`
+	Name    string `json:"first"`
+	Address string `json:"addr"`
+}
+
+var marshalJSONMapping map[string]string = map[string]string{
+	"ID":      "id",
+	"Name":    "name",
+	"Address": "address",
+}
+
+func (u User) MarshalJSON() ([]byte, error) {
+	data := map[string]interface{}{}
+
+	tt := reflect.TypeOf(u)
+	vv := reflect.ValueOf(u)
+
+	for it := 0; it < tt.NumField(); it++ {
+		ff := tt.Field(it)
+		key := ff.Name
+
+		value := vv.FieldByName(key).Interface()
+		key = marshalJSONMapping[key]
+		data[key] = value
+	}
+
+	return json.Marshal(data)
+}
+func main() {
+	j := `
+	{
+		"id":"id_1",
+		"first":"name_1",
+		"addr": "abc"
+	}
+	`
+	var decoded User
+	json.Unmarshal([]byte(j), &decoded)
+	fmt.Printf("%v\n", decoded)
+
+	j2, _ := json.Marshal(decoded)
+	fmt.Printf("%v", string(j2))
+}
