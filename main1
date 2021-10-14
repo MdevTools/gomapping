@@ -1,0 +1,120 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+)
+
+type User struct {
+	ID      string `json:"id"`
+	Name    string `json:"first"`
+	Address string `json:"addr"`
+	Phone   Phone  `json:"phone"`
+}
+
+type Phone struct {
+	Session   Session `json:"session"`
+	HomePhone string  `json:"homePhone"`
+	WorkPhone string  `json:"workPhone`
+}
+
+type requestPhone struct {
+	SessionOne string `json:"sessionOne"`
+	SessionTwo string `json:"sessionTw"`
+	HomePhone  string `json:"homePhone"`
+	WorkPhone  string `json:"workPhone`
+}
+
+type Session struct {
+	One string `json:"seOne"`
+	Two string `json:"seTwo"`
+}
+
+var marshalJSONMapping map[string]string = map[string]string{
+	"ID":        "id",
+	"Name":      "name",
+	"Address":   "address",
+	"Phone":     "phone",
+	"Session":   "session",
+	"HomePhone": "homePhone",
+	"WorkPhone": "workPhone",
+	"One":       "sessionOne",
+	"Two":       "sessionTwo",
+}
+
+func (u User) MarshalJSON() ([]byte, error) {
+	data := map[string]interface{}{}
+
+	tt := reflect.TypeOf(u)
+	vv := reflect.ValueOf(u)
+
+	for it := 0; it < tt.NumField(); it++ {
+		ff := tt.Field(it)
+		key := ff.Name
+
+		value := vv.FieldByName(key).Interface()
+		key = marshalJSONMapping[key]
+		data[key] = value
+	}
+
+	return json.Marshal(data)
+}
+
+func (u Session) MarshalJSON() ([]byte, error) {
+	data := map[string]interface{}{}
+
+	tt := reflect.TypeOf(u)
+	vv := reflect.ValueOf(u)
+
+	for it := 0; it < tt.NumField(); it++ {
+		ff := tt.Field(it)
+		key := ff.Name
+
+		value := vv.FieldByName(key).Interface()
+		key = marshalJSONMapping[key]
+		data[key] = value
+	}
+
+	return json.Marshal(data)
+}
+
+func main() {
+	s := Session{
+		One: "one",
+		Two: "two",
+	}
+	u := User{
+		ID:      "id1",
+		Name:    "name1",
+		Address: "address1",
+		Phone: Phone{
+			Session:   s,
+			HomePhone: "010",
+			WorkPhone: "020",
+		},
+	}
+
+	j2, _ := json.Marshal(u)
+	fmt.Println(string(j2))
+
+	j3, _ := json.Marshal(s)
+	fmt.Println(string(j3))
+
+	requestMap := make(map[string]interface{})
+	json.Unmarshal(j2, &requestMap)
+	fmt.Println(requestMap)
+
+	reqPhone := requestPhone{
+		SessionOne: u.Phone.Session.One,
+		SessionTwo: u.Phone.Session.Two,
+		HomePhone:  u.Phone.HomePhone,
+		WorkPhone:  u.Phone.WorkPhone,
+	}
+	reqPhoneMap := make(map[string]interface{})
+	reqPhoneJson, _ := json.Marshal(reqPhone)
+	json.Unmarshal(reqPhoneJson, &reqPhoneMap)
+
+	requestMap["phone"] = reqPhoneMap
+	fmt.Println(requestMap)
+}
